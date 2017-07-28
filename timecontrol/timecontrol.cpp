@@ -131,6 +131,9 @@ void SvcUninstall()
 	else
 	{
 		HKEY hSubKey;
+		SERVICE_STATUS_PROCESS ssp;
+		
+		ControlService(schService, SERVICE_CONTROL_STOP, (LPSERVICE_STATUS) &ssp);
 
 		if(DeleteService(schService))
 		{
@@ -359,7 +362,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				SetEvent(g_hEventPopup);
 				if(WaitForSingleObject(g_hEventAction, 15000) != WAIT_OBJECT_0)
 				{
-					timeincseconds(&last_system_time[0], 60);
+					timeincseconds(&last_system_time[0], 105);
 					SetSystemTime(&last_system_time[0]);
 				}
 			}
@@ -374,7 +377,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				SetEvent(g_hEventPopup);
 				if(WaitForSingleObject(g_hEventAction, 15000) != WAIT_OBJECT_0)
 				{
-					timeincseconds(&last_system_time[0], 60);
+					timeincseconds(&last_system_time[0], 105);
 					SetSystemTime(&last_system_time[0]);
 				}
 			}
