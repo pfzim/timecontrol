@@ -90,12 +90,61 @@ void SvcInstall()
 	{
 		HKEY hSubKey;
 
+		StartService(schService, 0, NULL);
+
 		if(RegOpenKey(HKEY_LOCAL_MACHINE, TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Run"), &hSubKey) == ERROR_SUCCESS)
 		{
 			RegSetValueEx(hSubKey, TEXT("pfzim_TimeChangeControl"), NULL, REG_SZ, (BYTE*)szPath, (_tcslen(szPath)+1) * sizeof(szPath[0]));
 			RegCloseKey(hSubKey);
 		}
 		MessageBox(NULL, TEXT("Service installed successfully"), TEXT("OK"), MB_OK);
+	}
+
+	CloseServiceHandle(schService);
+	CloseServiceHandle(schSCManager);
+}
+
+void SvcUninstall()
+{
+	SC_HANDLE schSCManager;
+	SC_HANDLE schService;
+
+	schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+
+	if(schSCManager == NULL)
+	{
+		//printf("OpenSCManager failed (%d)\n", GetLastError());
+		MessageBox(NULL, TEXT("OpenSCManager failed"), TEXT("Failed"), MB_OK);
+		return;
+	}
+
+
+	schService = OpenService(schSCManager, TC_NAME, SERVICE_STOP | DELETE);
+
+	if(schService == NULL)
+	{
+		//printf("CreateService failed (%d)\n", GetLastError());
+		MessageBox(NULL, TEXT("OpenService failed"), TEXT("Failed"), MB_OK);
+		CloseServiceHandle(schSCManager);
+		return;
+	}
+	else
+	{
+		HKEY hSubKey;
+
+		if(DeleteService(schService))
+		{
+			if(RegOpenKey(HKEY_LOCAL_MACHINE, TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Run"), &hSubKey) == ERROR_SUCCESS)
+			{
+				RegDeleteValue(hSubKey, TEXT("pfzim_TimeChangeControl"));
+				RegCloseKey(hSubKey);
+			}
+			MessageBox(NULL, TEXT("Service uninstalled successfully"), TEXT("OK"), MB_OK);
+		}
+		else
+		{
+			MessageBox(NULL, TEXT("Delete service failed"), TEXT("Error"), MB_OK);
+		}
 	}
 
 	CloseServiceHandle(schService);
@@ -519,6 +568,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		{
 			//printf("Installing service...");
 			SvcInstall();
+			return 0;
+		}
+		else if(strcmp(lpCmdLine, "/uninstall") == 0)
+		{
+			//printf("Installing service...");
+			SvcUninstall();
 			return 0;
 		}
 		else if(strcmp(lpCmdLine, "/service") == 0)
